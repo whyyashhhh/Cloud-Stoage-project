@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CloudVault — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;600;800&family=Playfair+Display:ital,wght@1,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./cloudvault_styles.css">
+</head>
+<body class="cv-bg">
+  <div class="navbar glass">
+    <div class="nav-left">
+      <div class="logo">CloudVault</div>
+      <div class="search"><input placeholder="Search files, folders..."/></div>
+    </div>
+    <div class="nav-right">
+      <button class="btn outline">Upload</button>
+      <button class="icon-btn">🔔</button>
+      <div class="avatar">TS</div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar glass">
+      <ul>
+        <li class="active">Dashboard</li>
+        <li>My Files</li>
+        <li id="navUpload">Upload</li>
+        <li>Shared</li>
+        <li>Trash</li>
+        <li>Settings</li>
+      </ul>
+    </aside>
+
+    <main class="dashboard-main">
+      <div class="top-cards">
+        <div class="card storage glass">
+          <div class="card-head">
+            <div class="title">Storage Usage</div>
+            <div class="muted">75% used</div>
+          </div>
+          <div class="progress"><div class="bar" style="width:75%"></div></div>
+          <div class="card-foot muted">32.7 GB of 45 GB</div>
+        </div>
+
+        <div class="card small glass">
+          <div class="title">Total files</div>
+          <div class="big">1,248</div>
+        </div>
+
+        <div class="card small glass">
+          <div class="title">Recent uploads</div>
+          <div class="big">12 today</div>
+        </div>
+      </div>
+
+      <div class="files-section">
+        <div class="files-header">
+          <h3>Recent Files</h3>
+          <div class="view-toggle">
+            <button id="gridView" class="active">Grid</button>
+            <button id="listView">List</button>
+          </div>
+        </div>
+
+        <div id="filesGrid" class="files-grid">
+          <!-- file cards inserted in HTML for demo -->
+          <div class="file-card glass">
+            <div class="file-meta"><div class="icon">📄</div><div><div class="name">Resume.pdf</div><div class="meta muted">2 MB • Uploaded today</div></div></div>
+            <div class="actions"><button data-action="download">⬇️</button><button data-action="delete" class="danger">🗑️</button></div>
+          </div>
+
+          <div class="file-card glass">
+            <div class="file-meta"><div class="icon">🖼️</div><div><div class="name">Banner.png</div><div class="meta muted">1.5 MB • May 11</div></div></div>
+            <div class="actions"><button data-action="download">⬇️</button><button data-action="delete" class="danger">🗑️</button></div>
+          </div>
+
+          <div class="file-card glass">
+            <div class="file-meta"><div class="icon">📦</div><div><div class="name">Data.zip</div><div class="meta muted">5 MB • May 10</div></div></div>
+            <div class="actions"><button data-action="download">⬇️</button><button data-action="delete" class="danger">🗑️</button></div>
+          </div>
+        </div>
+
+        <table id="filesList" class="files-list hidden">
+          <thead><tr><th>Name</th><th>Size</th><th>Upload Date</th><th>Actions</th></tr></thead>
+          <tbody>
+            <tr><td>report.pdf</td><td>2MB</td><td>May 10</td><td><button>⬇️</button> <button class="danger">🗑️</button></td></tr>
+            <tr><td>image.png</td><td>1MB</td><td>May 11</td><td><button>⬇️</button> <button class="danger">🗑️</button></td></tr>
+            <tr><td>data.zip</td><td>5MB</td><td>May 12</td><td><button>⬇️</button> <button class="danger">🗑️</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <input id="filePicker" type="file" multiple style="display:none">
+  <script src="./cloudvault_script.js"></script>
+</body>
+</html>

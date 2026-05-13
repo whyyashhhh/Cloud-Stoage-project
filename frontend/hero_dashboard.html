@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Cloud File Storage Platform</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,700&family=Inter:wght@300;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./hero_styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Cloud<span class="dot">.</span></div>
+    <nav class="nav">
+      <a href="#">Dashboard</a>
+      <a href="#files">My Files</a>
+      <a href="#upload">Upload</a>
+      <a href="#account">Account</a>
+    </nav>
+  </header>
+
+  <main class="hero">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <h1 class="headline"><span class="serif">Cloud File</span> <span class="sans">Storage Platform</span></h1>
+        <p class="sub">Securely upload, manage, and access your files from anywhere using cloud storage.</p>
+        <div class="ctas">
+          <button id="uploadBtn" class="btn primary">Upload Files</button>
+          <button id="viewBtn" class="btn secondary">View Dashboard</button>
+        </div>
+      </div>
+
+      <div class="mockup-wrap" aria-hidden="true">
+        <div class="mockup-card">
+          <header class="mockup-header">
+            <div class="dot red"></div>
+            <div class="dot yellow"></div>
+            <div class="dot green"></div>
+          </header>
+          <div class="mockup-body">
+            <div class="file-row header">
+              <div>File name</div>
+              <div>Size</div>
+              <div>Date</div>
+            </div>
+            <div class="file-row">
+              <div class="file">/ Portfolio_Design.pdf</div>
+              <div class="muted">2.3 MB</div>
+              <div class="muted">Apr 24</div>
+            </div>
+            <div class="file-row">
+              <div class="file">/ Hero_Mockup.png</div>
+              <div class="muted">4.1 MB</div>
+              <div class="muted">Apr 12</div>
+            </div>
+            <div class="upload-centered">
+              <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3v12" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <section class="dashboard" id="files">
+    <aside class="sidebar">
+      <ul>
+        <li class="active">Dashboard</li>
+        <li>My Files</li>
+        <li id="uploadNav">Upload</li>
+        <li>Settings</li>
+      </ul>
+    </aside>
+
+    <section class="main">
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-value">32.7 GB</div>
+          <div class="stat-label">Storage used</div>
+        </div>
+        <div class="stat small">
+          <div class="stat-value">1,248</div>
+          <div class="stat-label">Files</div>
+        </div>
+        <div class="stat small">
+          <div class="stat-value">120</div>
+          <div class="stat-label">Folders</div>
+        </div>
+        <div class="actions">
+          <button id="uploadTop" class="btn primary small">Upload</button>
+        </div>
+      </div>
+
+      <div class="file-grid">
+        <div class="file-card">
+          <div class="file-meta">
+            <div class="file-icon">📄</div>
+            <div>
+              <div class="name">Project-Proposal.docx</div>
+              <div class="meta muted">1.2 MB • May 02</div>
+            </div>
+          </div>
+          <div class="file-actions">
+            <button class="icon" data-action="download">⬇️</button>
+            <button class="icon danger" data-action="delete">🗑️</button>
+          </div>
+        </div>
+
+        <div class="file-card">
+          <div class="file-meta">
+            <div class="file-icon">📁</div>
+            <div>
+              <div class="name">Designs</div>
+              <div class="meta muted">Folder • 58 items</div>
+            </div>
+          </div>
+          <div class="file-actions">
+            <button class="icon" data-action="open">📂</button>
+          </div>
+        </div>
+
+        <div class="file-card">
+          <div class="file-meta">
+            <div class="file-icon">🖼️</div>
+            <div>
+              <div class="name">Hero-Banner.png</div>
+              <div class="meta muted">4.0 MB • Apr 18</div>
+            </div>
+          </div>
+          <div class="file-actions">
+            <button class="icon" data-action="download">⬇️</button>
+            <button class="icon danger" data-action="delete">🗑️</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </section>
+
+  <input id="fileInput" type="file" multiple style="display:none">
+
+  <script src="./hero_script.js"></script>
+</body>
+</html>

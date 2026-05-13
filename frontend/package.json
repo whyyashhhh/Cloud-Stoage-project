@@ -1,0 +1,14 @@
+{
+  "name": "cloud-storage-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for cloud storage application",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 3000",
+    "build": "echo 'No build needed for static files'",
+    "dev": "python -m http.server 8080"
+  },
+  "keywords": ["cloud", "storage", "file"],
+  "author": "",
+  "license": "MIT"
+}

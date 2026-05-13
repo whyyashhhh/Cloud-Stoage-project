@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Storage - Dashboard</title>
+    <link rel="stylesheet" href="./modern-styles.css">
+</head>
+<body>
+    <div class="background-shapes">
+        <div class="shape ribbon-1"></div>
+        <div class="shape ribbon-2"></div>
+        <div class="shape tube-1"></div>
+        <div class="shape tube-2"></div>
+    </div>
+
+    <div class="page">
+        <header class="topbar">
+            <div class="brand">
+                <h1>Cloud Storage</h1>
+                <p>Premium file workspace</p>
+            </div>
+            <div class="topbar-right">
+                <div class="user-pill" id="userDisplay">Logged in as: -</div>
+                <button class="btn btn-danger" id="logoutBtn">Logout</button>
+            </div>
+        </header>
+
+        <main class="grid">
+            <section class="panel">
+                <h2>Upload Files</h2>
+                <div class="upload-area" id="uploadArea">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <p>Drag files here or click to upload</p>
+                    <input type="file" id="fileInput" multiple style="display:none;">
+                </div>
+
+                <div class="progress-wrap" id="uploadProgress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <p class="progress-text" id="uploadStatus">Uploading...</p>
+                </div>
+            </section>
+
+            <section class="panel">
+                <h2>Your Files</h2>
+                <p class="stats">Files: <span id="fileCount">0</span></p>
+                <div class="files-list" id="filesList">
+                    <div class="empty">No files yet. Upload your first file.</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000/api/v1';
+        const CHUNK_SIZE = 8 * 1024 * 1024;
+        let currentToken = localStorage.getItem('token');
+        let currentUser = localStorage.getItem('username');
+
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const filesList = document.getElementById('filesList');
+        const fileCount = document.getElementById('fileCount');
+        const userDisplay = document.getElementById('userDisplay');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast';
+            toast.classList.add('show');
+            if (type && type !== 'info') {
+                toast.classList.add(type);
+            }
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.classList.remove(type);
+            }, 3500);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        async function ensureAuth() {
+            if (!currentToken) {
+                window.location.href = '/modern-login.html';
+                return false;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        // Token expired, redirect to login
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('username');
+                        window.location.href = '/modern-login.html';
+                        return false;
+                    }
+                    throw new Error('Auth check failed');
+                }
+
+                const user = await response.json();
+                currentUser = user.username;
+                localStorage.setItem('username', currentUser);
+                userDisplay.textContent = `Logged in as: ${currentUser}`;
+                return true;
+            } catch (error) {
+                console.error('Auth error:', error);
+                localStorage.removeItem('token');
+                localStorage.removeItem('username');
+                window.location.href = '/modern-login.html';
+                return false;
+            }
+        }
+
+        function createFileRow(file) {
+            const item = document.createElement('div');
+            item.className = 'file-item';
+
+            const date = new Date(file.upload_time || Date.now()).toLocaleDateString();
+            const size = formatFileSize(file.file_size || 0);
+            const fileId = file.file_id;
+            const fileName = file.file_name || 'file';
+            const version = file.latest_version || 1;
+            const status = file.status || 'unknown';
+
+            item.innerHTML = `
+                <div class="file-meta">
+                    <div class="file-name" title="${fileName}">${fileName}</div>
+                    <div class="file-detail">v${version} • ${size} • ${date} • ${status}</div>
+                </div>
+                <div class="file-actions">
+                    <button class="btn btn-ghost" data-action="download" data-id="${fileId}" data-name="${fileName}">Download</button>
+                    <button class="btn btn-ghost" data-action="restore" data-id="${fileId}" data-name="${fileName}">Restore</button>
+                    <button class="btn btn-danger" data-action="delete" data-id="${fileId}" data-name="${fileName}">Delete</button>
+                </div>
+            `;
+
+            return item;
+        }
+
+        async function loadFiles() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/files`, {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error('Session expired. Please login again.');
+                    }
+                    throw new Error('Could not load files');
+                }
+
+                const files = await response.json();
+                fileCount.textContent = files.length;
+
+                if (files.length === 0) {
+                    filesList.innerHTML = '<div class="empty">No files yet. Upload your first file.</div>';
+                    return;
+                }
+
+                filesList.innerHTML = '';
+                files.forEach((file) => {
+                    filesList.appendChild(createFileRow(file));
+                });
+            } catch (error) {
+                showToast(error.message || 'Failed to load files', 'error');
+                console.error('Load files error:', error);
+            }
+        }
+
+        async function uploadFile(file) {
+            const progress = document.getElementById('uploadProgress');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('uploadStatus');
+
+            progress.style.display = 'block';
+            progressText.textContent = `Preparing ${file.name}...`;
+
+            try {
+                const initResponse = await fetch(`${API_BASE_URL}/files/multipart/init`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        file_name: file.name,
+                        file_size: file.size,
+                        file_type: file.type || 'application/octet-stream'
+                    })
+                });
+
+                const initData = await initResponse.json();
+                if (!initResponse.ok) {
+                    throw new Error(initData.detail || `Upload initialization failed for ${file.name}`);
+                }
+
+                const totalParts = initData.total_parts;
+                const parts = [];
+
+                for (let partNumber = 1; partNumber <= totalParts; partNumber += 1) {
+                    const presignResponse = await fetch(`${API_BASE_URL}/files/multipart/presign-part`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${currentToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            upload_id: initData.upload_id,
+                            s3_key: initData.s3_key,
+                            part_number: partNumber
+                        })
+                    });
+
+                    const presignData = await presignResponse.json();
+                    if (!presignResponse.ok) {
+                        throw new Error(presignData.detail || `Could not prepare chunk ${partNumber}`);
+                    }
+
+                    const start = (partNumber - 1) * CHUNK_SIZE;
+                    const chunk = file.slice(start, start + CHUNK_SIZE);
+
+                    const uploadResponse = await fetch(presignData.url, {
+                        method: 'PUT',
+                        body: chunk
+                    });
+
+                    if (!uploadResponse.ok) {
+                        throw new Error(`Upload failed for chunk ${partNumber}/${totalParts}`);
+                    }
+
+                    parts.push({
+                        part_number: partNumber,
+                        etag: uploadResponse.headers.get('etag')?.replaceAll('"', '') || `part-${partNumber}`
+                    });
+
+                    const pct = Math.round((partNumber / totalParts) * 100);
+                    progressFill.style.width = `${pct}%`;
+                    progressText.textContent = `Uploading ${file.name}: ${pct}%`;
+                }
+
+                const completeResponse = await fetch(`${API_BASE_URL}/files/multipart/complete`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        upload_id: initData.upload_id,
+                        s3_key: initData.s3_key,
+                        parts
+                    })
+                });
+
+                const completeData = await completeResponse.json();
+                if (!completeResponse.ok) {
+                    throw new Error(completeData.detail || `Upload finalization failed for ${file.name}`);
+                }
+
+                showToast(`"${file.name}" uploaded successfully`, 'success');
+                progressText.textContent = 'Upload complete';
+                await loadFiles();
+            } catch (error) {
+                progressText.textContent = 'Upload failed';
+                showToast(error.message || `Failed to upload ${file.name}`, 'error');
+            } finally {
+                progressFill.style.width = '0%';
+                setTimeout(() => {
+                    progress.style.display = 'none';
+                }, 1500);
+            }
+        }
+
+        async function downloadFile(fileId, filename) {
+            try {
+                showToast(`Preparing ${filename} for download...`, 'info');
+                
+                const response = await fetch(`${API_BASE_URL}/files/${fileId}/download-url`, {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Download link generation failed');
+                }
+
+                if (!data.url) {
+                    throw new Error('No download URL received');
+                }
+
+                window.open(data.url, '_blank', 'noopener,noreferrer');
+                showToast(`${filename} download started`, 'success');
+            } catch (error) {
+                showToast(error.message || 'Download failed', 'error');
+            }
+        }
+
+        async function showVersions(fileId, filename) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/files/${fileId}/versions`, {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                const versions = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(versions.detail || 'Failed to load versions');
+                }
+
+                if (!versions || versions.length === 0) {
+                    showToast('No versions available for this file', 'warning');
+                    return;
+                }
+
+                const versionList = versions
+                    .map((v, i) => `${v.version_number}: ${formatFileSize(v.file_size)} (${new Date(v.upload_time).toLocaleDateString()})`)
+                    .join('\n');
+                
+                const versionInput = window.prompt(`Select version of "${filename}":\n\n${versionList}\n\nEnter version number:`, String(versions[0].version_number));
+                
+                if (!versionInput) {
+                    return;
+                }
+
+                const versionNumber = Number(versionInput);
+                if (!Number.isInteger(versionNumber) || versionNumber < 1) {
+                    showToast('Invalid version number', 'error');
+                    return;
+                }
+
+                const versionExists = versions.some(v => v.version_number === versionNumber);
+                if (!versionExists) {
+                    showToast(`Version ${versionNumber} does not exist`, 'error');
+                    return;
+                }
+
+                await restoreFile(fileId, filename, versionNumber);
+            } catch (error) {
+                showToast(error.message || 'Failed to load versions', 'error');
+            }
+        }
+
+        async function restoreFile(fileId, filename, versionNumber) {
+            if (!confirm(`Restore "${filename}" to version ${versionNumber}? Current version will be preserved.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/files/${fileId}/versions/${versionNumber}/restore`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Restore failed');
+                }
+
+                showToast(`Successfully restored "${filename}" to version ${versionNumber}`, 'success');
+                await loadFiles();
+            } catch (error) {
+                showToast(error.message || 'Restore failed', 'error');
+            }
+        }
+
+        async function deleteFile(fileId, filename) {
+            if (!confirm(`Are you sure you want to delete "${filename}"? This action cannot be undone.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/files/${fileId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    let errorDetail = 'Delete failed';
+                    try {
+                        const errorData = await response.json();
+                        errorDetail = errorData.detail || errorDetail;
+                    } catch {}
+                    throw new Error(errorDetail);
+                }
+
+                showToast(`"${filename}" has been deleted`, 'success');
+                await loadFiles();
+            } catch (error) {
+                showToast(error.message || 'Delete failed', 'error');
+            }
+        }
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+        uploadArea.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = [...e.dataTransfer.files];
+            for (const file of files) {
+                try {
+                    await uploadFile(file);
+                } catch (error) {
+                    showToast(error.message);
+                }
+            }
+        });
+
+        fileInput.addEventListener('change', async (e) => {
+            const files = [...e.target.files];
+            for (const file of files) {
+                try {
+                    await uploadFile(file);
+                } catch (error) {
+                    showToast(error.message);
+                }
+            }
+            fileInput.value = '';
+        });
+
+        filesList.addEventListener('click', async (e) => {
+            const target = e.target;
+            const action = target.getAttribute('data-action');
+            if (!action) return;
+
+            const id = Number(target.getAttribute('data-id'));
+            if (action === 'download') {
+                const name = target.getAttribute('data-name') || 'file';
+                await downloadFile(id, name);
+                return;
+            }
+
+            if (action === 'restore') {
+                const name = target.getAttribute('data-name') || 'file';
+                await showVersions(id, name);
+                return;
+            }
+
+            if (action === 'delete') {
+                const name = target.getAttribute('data-name') || 'file';
+                await deleteFile(id, name);
+            }
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            window.location.href = '/modern-login.html';
+        });
+
+        (async function init() {
+            const ok = await ensureAuth();
+            if (ok) {
+                await loadFiles();
+            }
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Vault - Scalable Storage</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="bg-orb orb-one"></div>
+    <div class="bg-orb orb-two"></div>
+    <div class="bg-grid"></div>
+
+    <main class="shell">
+        <section id="authSection" class="auth-screen">
+            <div class="hero-copy">
+                <span class="eyebrow">FAANG-level cloud storage backend</span>
+                <h1>Cloud Vault</h1>
+                <p>
+                    Secure JWT auth, S3 multipart uploads, version history, presigned links,
+                    Redis rate limiting, and background processing in one workspace.
+                </p>
+                <div class="hero-points">
+                    <span>JWT access + refresh</span>
+                    <span>S3 multipart upload</span>
+                    <span>File versioning</span>
+                    <span>Celery workers</span>
+                </div>
+            </div>
+
+            <div class="auth-card">
+                <div class="auth-tabs">
+                    <button id="loginTab" class="tab active" onclick="toggleAuthForm('login')">Login</button>
+                    <button id="registerTab" class="tab" onclick="toggleAuthForm('register')">Sign Up</button>
+                </div>
+
+                <div id="loginForm" class="auth-form">
+                    <h2>Welcome back</h2>
+                    <p class="form-subtitle">Use your account to access files, versions, and uploads.</p>
+                    <label>Username</label>
+                    <input type="text" id="loginUsername" placeholder="your username" autocomplete="username">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="your password" autocomplete="current-password">
+                    <button class="primary-btn" onclick="handleLogin()">Login</button>
+                    <p class="switch-copy">New here? <a href="#" onclick="toggleAuthForm('register'); return false;">Create an account</a></p>
+                </div>
+
+                <div id="registerForm" class="auth-form hidden">
+                    <h2>Create account</h2>
+                    <p class="form-subtitle">Start with refresh-token auth and ownership-safe file storage.</p>
+                    <label>Username</label>
+                    <input type="text" id="registerUsername" placeholder="choose a username" autocomplete="username">
+                    <label>Email</label>
+                    <input type="email" id="registerEmail" placeholder="name@company.com" autocomplete="email">
+                    <label>Password</label>
+                    <input type="password" id="registerPassword" placeholder="minimum 6 characters" autocomplete="new-password">
+                    <label>Confirm password</label>
+                    <input type="password" id="registerPasswordConfirm" placeholder="repeat password" autocomplete="new-password">
+                    <button class="primary-btn" onclick="handleRegister()">Sign Up</button>
+                    <p class="switch-copy">Already registered? <a href="#" onclick="toggleAuthForm('login'); return false;">Log in</a></p>
+                </div>
+            </div>
+        </section>
+
+        <section id="dashboardSection" class="dashboard hidden">
+            <header class="topbar">
+                <div>
+                    <p class="eyebrow">Production dashboard</p>
+                    <h1>Cloud Vault Console</h1>
+                </div>
+                <div class="topbar-actions">
+                    <span id="userDisplay" class="user-pill"></span>
+                    <button class="ghost-btn" onclick="refreshSession()">Refresh Token</button>
+                    <button class="danger-btn" onclick="handleLogout()">Logout</button>
+                </div>
+            </header>
+
+            <section class="stats-grid">
+                <article class="stat-card">
+                    <span class="stat-label">Files</span>
+                    <strong id="fileCount">0</strong>
+                    <small>Total objects owned by this user</small>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Upload mode</span>
+                    <strong>Multipart</strong>
+                    <small>Pre-signed chunk upload flow</small>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Access</span>
+                    <strong>Presigned URLs</strong>
+                    <small>Time-limited download links</small>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Processing</span>
+                    <strong>Celery</strong>
+                    <small>Background post-upload jobs</small>
+                </article>
+            </section>
+
+            <nav class="section-nav">
+                <button class="nav-chip active" data-panel="overviewPanel" onclick="showPanel('overviewPanel')">Overview</button>
+                <button class="nav-chip" data-panel="uploadPanel" onclick="showPanel('uploadPanel')">Upload</button>
+                <button class="nav-chip" data-panel="versionsPanel" onclick="showPanel('versionsPanel')">Versions</button>
+                <button class="nav-chip" data-panel="securityPanel" onclick="showPanel('securityPanel')">Security</button>
+                <button class="nav-chip" data-panel="activityPanel" onclick="showPanel('activityPanel')">Activity</button>
+            </nav>
+
+            <section id="overviewPanel" class="dashboard-grid panel visible">
+                <div class="panel card">
+                    <div class="panel-heading">
+                        <h2>Your Files</h2>
+                        <p>Download, delete, and inspect version history.</p>
+                    </div>
+                    <div id="filesList" class="files-list">
+                        <div class="empty-state">No files yet. Upload your first file.</div>
+                    </div>
+                </div>
+
+                <div class="panel stack">
+                    <div class="card">
+                        <div class="panel-heading">
+                            <h2>Upload Queue</h2>
+                            <p>Multipart upload flow with progress and resumable metadata.</p>
+                        </div>
+                        <div id="uploadQueue" class="queue-list">
+                            <div class="empty-state compact">No active uploads.</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="panel-heading">
+                            <h2>Backend Status</h2>
+                            <p>FastAPI, PostgreSQL, Redis, Celery, and S3 presigned access.</p>
+                        </div>
+                        <div class="status-list">
+                            <div><span>API</span><strong id="apiStatus">Unknown</strong></div>
+                            <div><span>Refresh token</span><strong id="tokenStatus">Stored</strong></div>
+                            <div><span>Storage</span><strong>S3 multipart</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="uploadPanel" class="dashboard-grid panel hidden">
+                <div class="card">
+                    <div class="panel-heading">
+                        <h2>Multipart upload</h2>
+                        <p>Choose one or more files to upload through presigned chunk URLs.</p>
+                    </div>
+                    <div id="uploadArea" class="upload-area">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" class="upload-icon"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        <p>Drag files here or click to choose files</p>
+                        <small>Uploads are chunked and resumable.</small>
+                        <input type="file" id="fileInput" multiple hidden>
+                    </div>
+                    <div id="uploadProgress" class="progress-wrap hidden">
+                        <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+                        <p id="uploadStatus" class="progress-text">Uploading...</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="panel-heading">
+                        <h2>Upload steps</h2>
+                        <p>This mirrors the real backend flow.</p>
+                    </div>
+                    <ol class="steps">
+                        <li>Init multipart upload session.</li>
+                        <li>Request presigned URLs for each chunk.</li>
+                        <li>Upload chunks directly to S3.</li>
+                        <li>Complete upload and trigger Celery job.</li>
+                    </ol>
+                </div>
+            </section>
+
+            <section id="versionsPanel" class="dashboard-grid panel hidden">
+                <div class="card full">
+                    <div class="panel-heading">
+                        <h2>Version history</h2>
+                        <p>Select a file to view previous versions and restore a snapshot.</p>
+                    </div>
+                    <div class="version-toolbar">
+                        <select id="versionFileSelect"></select>
+                        <button class="ghost-btn" onclick="loadVersionHistory()">Load versions</button>
+                    </div>
+                    <div id="versionList" class="version-list">
+                        <div class="empty-state compact">Pick a file to inspect its versions.</div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="securityPanel" class="dashboard-grid panel hidden">
+                <div class="card">
+                    <div class="panel-heading">
+                        <h2>Security controls</h2>
+                        <p>JWT, rate limiting, and user ownership checks are enforced by the backend.</p>
+                    </div>
+                    <div class="security-grid">
+                        <div class="security-box"><strong>JWT Access</strong><span>Short-lived bearer token</span></div>
+                        <div class="security-box"><strong>Refresh Token</strong><span>Rotate access without re-login</span></div>
+                        <div class="security-box"><strong>Redis Rate Limit</strong><span>IP throttling is active</span></div>
+                        <div class="security-box"><strong>Ownership</strong><span>Cross-user access blocked</span></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="panel-heading">
+                        <h2>API links</h2>
+                        <p>Useful actions exposed by the backend.</p>
+                    </div>
+                    <div class="link-list">
+                        <button class="secondary-btn" onclick="copyApiPath('/auth/me')">Copy /auth/me</button>
+                        <button class="secondary-btn" onclick="copyApiPath('/files/multipart/init')">Copy multipart init</button>
+                        <button class="secondary-btn" onclick="copyApiPath('/files/{file_id}/download-url')">Copy download URL route</button>
+                        <button class="secondary-btn" onclick="copyApiPath('/files/{file_id}/versions')">Copy version route</button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="activityPanel" class="dashboard-grid panel hidden">
+                <div class="card full">
+                    <div class="panel-heading">
+                        <h2>Activity log</h2>
+                        <p>Recent actions from the UI and backend lifecycle.</p>
+                    </div>
+                    <div id="activityList" class="activity-list"></div>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CloudVault — Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;600;800&family=Playfair+Display:ital,wght@1,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./cloudvault_styles.css">
+</head>
+<body class="cv-bg">
+  <main class="login-root">
+    <section class="illustration">
+      <div class="grad-illustration">
+        <h2 class="ill-title">Secure Cloud Storage For Your Files</h2>
+        <p class="ill-sub">Store, manage and access files anywhere</p>
+      </div>
+    </section>
+
+    <section class="login-card-wrap">
+      <div class="login-card glass">
+        <h3 class="card-title">Welcome back</h3>
+        <form id="loginForm" class="form">
+          <label class="field">
+            <span class="label">Email</span>
+            <input id="email" type="email" placeholder="you@company.com" required>
+          </label>
+          <label class="field">
+            <span class="label">Password</span>
+            <input id="password" type="password" placeholder="••••••••" required>
+          </label>
+          <button class="btn primary full" type="submit">Login</button>
+        </form>
+        <div class="card-links">
+          <a href="#" class="muted">Forgot password?</a>
+          <a href="#" class="muted">Don't have an account? Sign up</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="./cloudvault_script.js"></script>
+</body>
+</html>
