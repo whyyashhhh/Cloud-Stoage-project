@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -13,13 +15,19 @@ from cloud_backend.services.rate_limiter import rate_limit
 settings = get_settings()
 configure_logging()
 
-Base.metadata.create_all(bind=engine)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
     description="Production-oriented cloud storage backend",
 )
+
+
+@app.on_event("startup")
+def create_database_tables() -> None:
+    Base.metadata.create_all(bind=engine)
+    logger.info("Database tables ensured")
 
 app.add_middleware(
     CORSMiddleware,

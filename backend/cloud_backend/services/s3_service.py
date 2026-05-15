@@ -1,7 +1,7 @@
 from typing import Any
+import logging
 import boto3
 import uuid
-import os
 from urllib.parse import quote
 from botocore.exceptions import ClientError, NoCredentialsError
 
@@ -9,6 +9,7 @@ from cloud_backend.core.config import get_settings
 
 
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 
 class S3Service:
@@ -16,7 +17,13 @@ class S3Service:
         self.bucket = settings.s3_bucket_name
         self.use_mock = False
         self.mock_uploads: dict[str, dict[str, Any]] = {}  # For mocking multipart uploads
-        
+
+        if not settings.aws_access_key_id or not settings.aws_secret_access_key:
+            logger.warning("No AWS credentials found; using mock S3 service")
+            self.use_mock = True
+            self.client = None
+            return
+
         try:
             session = boto3.session.Session(
                 aws_access_key_id=settings.aws_access_key_id,
@@ -26,16 +33,16 @@ class S3Service:
             # Use endpoint_url for LocalStack development or other S3-compatible services
             endpoint_url = getattr(settings, 's3_endpoint_url', None)
             self.client = session.client("s3", endpoint_url=endpoint_url)
-            
+
             # Try to list buckets to verify credentials work
             try:
                 self.client.list_buckets()
             except NoCredentialsError:
-                print("⚠️  No AWS credentials found - using mock S3 service for development")
+                logger.warning("No AWS credentials found; using mock S3 service for development")
                 self.use_mock = True
                 self.client = None
         except Exception as e:
-            print(f"⚠️  Failed to initialize S3 client: {e} - using mock S3 service")
+            logger.warning("Failed to initialize S3 client; using mock S3 service: %s", e)
             self.use_mock = True
             self.client = None
 
@@ -60,7 +67,7 @@ class S3Service:
             )
             return response["UploadId"]
         except NoCredentialsError:
-            print("⚠️  Falling back to mock S3 for multipart upload")
+            logger.warning("Falling back to mock S3 for multipart upload")
             self.use_mock = True
             return self.start_multipart_upload(key, content_type)
 
@@ -85,7 +92,7 @@ class S3Service:
                 ExpiresIn=settings.s3_presigned_expiry_seconds,
             )
         except NoCredentialsError:
-            print("⚠️  Falling back to mock S3 for presigned URL")
+            logger.warning("Falling back to mock S3 for presigned URL")
             self.use_mock = True
             return self.get_presigned_upload_part_url(key, upload_id, part_number)
 
@@ -100,7 +107,7 @@ class S3Service:
                 del self.mock_uploads[upload_id]
             
             location = f"s3://{self.bucket}/{key}"
-            print(f"✅ [Mock S3] Completed multipart upload: {upload_id} -> {location}")
+            logger.info("[Mock S3] Completed multipart upload: %s -> %s", upload_id, location)
             return {
                 "Location": location,
                 "Bucket": self.bucket,
@@ -125,7 +132,7 @@ class S3Service:
         if self.use_mock or self.client is None:
             if upload_id in self.mock_uploads:
                 del self.mock_uploads[upload_id]
-            print(f"🚫 [Mock S3] Aborted multipart upload: {upload_id}")
+            logger.info("[Mock S3] Aborted multipart upload: %s", upload_id)
             return
         
         try:
@@ -153,7 +160,7 @@ class S3Service:
     def delete_object(self, key: str) -> None:
         """Delete an object"""
         if self.use_mock or self.client is None:
-            print(f"🗑️  [Mock S3] Deleted object: {key}")
+            logger.info("[Mock S3] Deleted object: %s", key)
             return
         
         try:
