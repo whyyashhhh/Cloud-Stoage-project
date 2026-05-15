@@ -4,6 +4,7 @@
 
 const API_BASE_URL = 'http://localhost:8000/api/v1';
 const CHUNK_SIZE = 8 * 1024 * 1024;
+const MAX_FILE_SIZE = 400 * 1024 * 1024; // 400MB limit
 
 let token = localStorage.getItem('token');
 
@@ -66,6 +67,12 @@ async function loadFiles(){
 
 async function uploadMultipart(file){
   try{
+    // Validate file size (400MB limit)
+    if(file.size > MAX_FILE_SIZE){
+      showToast(`File size exceeds 400MB limit (${formatFileSize(file.size)})`);
+      return;
+    }
+    
     const initR = await fetch(`${API_BASE_URL}/files/multipart/init`,{
       method:'POST', headers:{'Content-Type':'application/json', Authorization:`Bearer ${token}`},
       body: JSON.stringify({file_name:file.name,file_size:file.size,file_type:file.type||'application/octet-stream'})

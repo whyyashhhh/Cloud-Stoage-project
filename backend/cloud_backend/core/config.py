@@ -27,9 +27,25 @@ class Settings:
     s3_bucket_name: str = os.getenv("S3_BUCKET_NAME", "cloud-storage-dev")
     s3_presigned_expiry_seconds: int = int(os.getenv("S3_PRESIGNED_EXPIRY_SECONDS", "900"))
     multipart_chunk_size_mb: int = int(os.getenv("MULTIPART_CHUNK_SIZE_MB", "8"))
+    max_upload_size_mb: int = int(os.getenv("MAX_UPLOAD_SIZE_MB", "400"))  # 400MB limit
 
     celery_broker_url: str = os.getenv("CELERY_BROKER_URL", redis_url)
     celery_result_backend: str = os.getenv("CELERY_RESULT_BACKEND", redis_url)
+
+    # OAuth Configuration
+    google_client_id: str | None = os.getenv("GOOGLE_CLIENT_ID")
+    google_client_secret: str | None = os.getenv("GOOGLE_CLIENT_SECRET")
+    google_redirect_uri: str = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/api/v1/auth/callback/google")
+
+    facebook_client_id: str | None = os.getenv("FACEBOOK_CLIENT_ID")
+    facebook_client_secret: str | None = os.getenv("FACEBOOK_CLIENT_SECRET")
+    facebook_redirect_uri: str = os.getenv("FACEBOOK_REDIRECT_URI", "http://localhost:8000/api/v1/auth/callback/facebook")
+
+    github_client_id: str | None = os.getenv("GITHUB_CLIENT_ID")
+    github_client_secret: str | None = os.getenv("GITHUB_CLIENT_SECRET")
+    github_redirect_uri: str = os.getenv("GITHUB_REDIRECT_URI", "http://localhost:8000/api/v1/auth/callback/github")
+
+    frontend_url: str = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
     cors_origins: list[str] = [
         "http://localhost",

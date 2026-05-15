@@ -60,6 +60,15 @@ def init_upload(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    # Check upload size limit (400MB)
+    max_bytes = settings.max_upload_size_mb * 1024 * 1024
+    if payload.file_size > max_bytes:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=413,
+            detail=f"File size exceeds maximum limit of {settings.max_upload_size_mb}MB"
+        )
+    
     file_obj, session = init_multipart_upload(
         db=db,
         user_id=current_user.id,
