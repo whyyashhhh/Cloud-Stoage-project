@@ -1,0 +1,59 @@
+services:
+  # Backend API Service
+  - type: web
+    name: cloud-storage-backend
+    runtime: python311
+    plan: free
+    buildCommand: |
+      pip install -r backend/requirements.txt
+    startCommand: cd backend && gunicorn -w 1 -b 0.0.0.0:8000 -k uvicorn.workers.UvicornWorker cloud_backend.main:app
+    envVars:
+      - key: DATABASE_URL
+        scope: all
+      - key: SECRET_KEY
+        scope: all
+      - key: REDIS_URL
+        scope: all
+      - key: AWS_ACCESS_KEY_ID
+        scope: all
+      - key: AWS_SECRET_ACCESS_KEY
+        scope: all
+      - key: S3_BUCKET_NAME
+        value: cloud-storage-prod
+      - key: MAX_UPLOAD_SIZE_MB
+        value: "400"
+      - key: GOOGLE_CLIENT_ID
+        scope: all
+      - key: GOOGLE_CLIENT_SECRET
+        scope: all
+      - key: FACEBOOK_CLIENT_ID
+        scope: all
+      - key: FACEBOOK_CLIENT_SECRET
+        scope: all
+      - key: GITHUB_CLIENT_ID
+        scope: all
+      - key: GITHUB_CLIENT_SECRET
+        scope: all
+      - key: FRONTEND_URL
+        scope: all
+
+  # Frontend Service
+  - type: static_site
+    name: cloud-storage-frontend
+    staticPublishPath: frontend
+    buildCommand: echo "Frontend ready"
+    routes:
+      - path: /
+        destination: /index.html
+      - path: /modern-login.html
+        destination: /modern-login.html
+      - path: /modern-signup.html
+        destination: /modern-signup.html
+      - path: /modern-dashboard.html
+        destination: /modern-dashboard.html
+
+databases:
+  - name: cloud-storage-postgres
+    databaseName: cloud_storage
+    user: clouduser
+    region: oregon
