@@ -38,7 +38,7 @@ services:
         scope: all
 
   # Frontend Service
-  - type: static_site
+  - type: static
     name: cloud-storage-frontend
     staticPublishPath: frontend
     buildCommand: echo "Frontend ready"
