@@ -9,33 +9,33 @@ services:
     startCommand: cd backend && gunicorn -w 1 -b 0.0.0.0:8000 -k uvicorn.workers.UvicornWorker cloud_backend.main:app
     envVars:
       - key: DATABASE_URL
-        scope: all
+        value: ""
       - key: SECRET_KEY
-        scope: all
+        value: ""
       - key: REDIS_URL
-        scope: all
+        value: ""
       - key: AWS_ACCESS_KEY_ID
-        scope: all
+        value: ""
       - key: AWS_SECRET_ACCESS_KEY
-        scope: all
+        value: ""
       - key: S3_BUCKET_NAME
         value: cloud-storage-prod
       - key: MAX_UPLOAD_SIZE_MB
         value: "400"
       - key: GOOGLE_CLIENT_ID
-        scope: all
+        value: ""
       - key: GOOGLE_CLIENT_SECRET
-        scope: all
+        value: ""
       - key: FACEBOOK_CLIENT_ID
-        scope: all
+        value: ""
       - key: FACEBOOK_CLIENT_SECRET
-        scope: all
+        value: ""
       - key: GITHUB_CLIENT_ID
-        scope: all
+        value: ""
       - key: GITHUB_CLIENT_SECRET
-        scope: all
+        value: ""
       - key: FRONTEND_URL
-        scope: all
+        value: ""
 
 databases:
   - name: cloud-storage-postgres
