@@ -37,21 +37,6 @@ services:
       - key: FRONTEND_URL
         scope: all
 
-  # Frontend Service
-  - type: static
-    name: cloud-storage-frontend
-    staticPublishPath: frontend
-    buildCommand: echo "Frontend ready"
-    routes:
-      - path: /
-        destination: /index.html
-      - path: /modern-login.html
-        destination: /modern-login.html
-      - path: /modern-signup.html
-        destination: /modern-signup.html
-      - path: /modern-dashboard.html
-        destination: /modern-dashboard.html
-
 databases:
   - name: cloud-storage-postgres
     databaseName: cloud_storage
