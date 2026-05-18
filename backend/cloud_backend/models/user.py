@@ -1,1 +1,4 @@
-from models.models.user import User
+from ._compat import load_symbol
+
+
+User = load_symbol("user", "User")

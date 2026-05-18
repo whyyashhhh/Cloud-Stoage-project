@@ -1,1 +1,4 @@
-from models.models.refresh_token import RefreshToken
+from ._compat import load_symbol
+
+
+RefreshToken = load_symbol("refresh_token", "RefreshToken")

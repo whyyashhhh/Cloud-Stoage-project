@@ -1,1 +1,4 @@
-from models.models.upload_session import UploadSession
+from ._compat import load_symbol
+
+
+UploadSession = load_symbol("upload_session", "UploadSession")
