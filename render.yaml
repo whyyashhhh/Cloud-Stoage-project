@@ -6,13 +6,13 @@ services:
     plan: free
     buildCommand: |
       pip install -r backend/requirements.txt
-    startCommand: cd backend && gunicorn -w 1 -b 0.0.0.0:8000 -k uvicorn.workers.UvicornWorker cloud_backend.main:app
+    startCommand: cd backend && gunicorn -w 1 -b 0.0.0.0:$PORT -k uvicorn.workers.UvicornWorker app:app
     envVars:
       - key: DATABASE_URL
-        value: ""
+        fromDatabase:
+          name: cloud-storage-postgres
+          property: connectionString
       - key: SECRET_KEY
-        value: ""
-      - key: REDIS_URL
         value: ""
       - key: AWS_ACCESS_KEY_ID
         value: ""

@@ -8,6 +8,9 @@ settings = get_settings()
 
 
 async def rate_limit(request: Request) -> None:
+    if redis_client is None:
+        return
+
     ip = request.client.host if request.client else "unknown"
     key = f"rate_limit:{ip}"
 

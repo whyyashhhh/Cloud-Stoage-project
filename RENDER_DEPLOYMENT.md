@@ -50,9 +50,7 @@ Render will read `render.yaml` and show services to deploy:
 Click the backend service and go to **Environment** tab. Add these:
 
 ```env
-DATABASE_URL=postgresql://clouduser:PASSWORD@postgres-host:5432/cloud_storage
 SECRET_KEY=your-super-secret-key-min-32-chars
-REDIS_URL=redis://localhost:6379/0
 MAX_UPLOAD_SIZE_MB=400
 
 # AWS S3 (for file storage)
@@ -76,6 +74,8 @@ GITHUB_REDIRECT_URI=https://your-app.onrender.com/api/v1/auth/callback/github
 
 FRONTEND_URL=https://your-frontend.onrender.com
 ```
+
+The blueprint now creates and wires `DATABASE_URL` from the Render PostgreSQL service. The backend will run without Redis on Render, so you only need to set the app secrets and any external provider credentials.
 
 ---
 
@@ -113,9 +113,10 @@ Update each OAuth provider with your Render URLs:
 1. Click **"Deploy Blueprint"**
 2. Render will:
    - Build backend service
+   - Provision PostgreSQL
+   - Wire the backend service to the managed database
    - Deploy frontend
-   - Create/configure database
-   - Run migrations
+   - Run migrations on backend startup
 3. Wait for all services to show **"Live"** (green)
 
 ---
