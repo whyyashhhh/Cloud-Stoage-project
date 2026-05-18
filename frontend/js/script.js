@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:8000/api/v1'
+    : 'https://cloud-storage-backend-web.onrender.com/api/v1';
 const STORAGE_KEY = 'cloudvault_session';
 const CHUNK_SIZE = 8 * 1024 * 1024;
 

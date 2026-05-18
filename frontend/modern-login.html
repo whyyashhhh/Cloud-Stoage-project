@@ -101,7 +101,9 @@
     </div>
 
     <script>
-        const API_BASE_URL = 'http://localhost:8000/api/v1';
+        const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+            ? 'http://localhost:8000/api/v1'
+            : 'https://cloud-storage-backend-web.onrender.com/api/v1';
 
         // Form submission
         document.getElementById('loginForm').addEventListener('submit', async function(e) {

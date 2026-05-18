@@ -2,7 +2,9 @@
    Supports: multipart upload, list, download (presigned), delete, restore
 */
 
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:8000/api/v1'
+  : 'https://cloud-storage-backend-web.onrender.com/api/v1';
 const CHUNK_SIZE = 8 * 1024 * 1024;
 const MAX_FILE_SIZE = 400 * 1024 * 1024; // 400MB limit
 

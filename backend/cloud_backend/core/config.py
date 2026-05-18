@@ -52,6 +52,7 @@ class Settings:
         "http://localhost:3000",
         "http://localhost:5173",
         "http://localhost:8000",
+        frontend_url,
     ]
 
 
